@@ -41,5 +41,5 @@ If this privacy policy is updated, the changes will be posted here with an updat
 
 If you have questions about this privacy policy, please contact:
 
-- GitHub: [github.com/vStokke/stellar-vanguard-godot](https://github.com/ovestokke/stellar-vanguard-godot)
+- GitHub: [github.com/vStokke/stellar-vanguard](https://github.com/vStokke/stellar-vanguard)
 - Email: stellarvanguard@vstokke.com
