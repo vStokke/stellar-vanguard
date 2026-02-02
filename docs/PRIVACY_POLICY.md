@@ -1,45 +1,72 @@
 # Privacy Policy for Stellar Vanguard
 
-**Last updated:** January 31, 2026
+**Effective Date: February 2, 2026**
 
-## Overview
+This privacy policy describes how Stellar Vanguard ("the Game"), developed by vStokke ("we", "us", or "our"), handles information when you use our mobile application.
 
-Stellar Vanguard is an offline single-player game developed by vStokke. This privacy policy explains how the app handles user information.
+## Information We Collect
 
-## Data Collection
+**We do not directly collect, store, or transmit any personal information from our users.** However, the Game integrates third-party services that may collect certain data as described below.
 
-**Stellar Vanguard does not collect, store, or transmit any personal data.** The app:
+### Locally Stored Data
 
-- Does not require an internet connection
-- Does not collect personal information
-- Does not use analytics or tracking services
-- Does not contain advertisements
-- Does not use third-party SDKs that collect data
-- Does not access device sensors (camera, microphone, location, etc.)
+Game save data (progress, settings, and pilot profiles) is stored locally on your device in encrypted form. This data is never transmitted to us or any third party.
 
-## Local Data Storage
+### Data Collected by Third-Party Services
 
-The app stores game save data (pilot profiles, settings, and progress) locally on your device only. This data:
+The following third-party services operate within the Game and may collect data according to their own privacy policies:
 
-- Is stored in the app's private storage directory
-- Is never transmitted to any server
-- Is deleted when you uninstall the app (unless you have opted into Android's backup service)
+**Google AdMob (Ad Serving)**
 
-## Permissions
+The Game displays interstitial and rewarded advertisements through Google AdMob. AdMob may collect:
 
-Stellar Vanguard requests no special permissions. It runs entirely offline with no access to your personal data, contacts, files, or network.
+- Advertising ID (Android Ad ID)
+- Device information (device model, OS version, screen size)
+- IP address (for approximate location and ad fraud prevention)
+- App usage data and ad interaction data
+- Crash and performance diagnostics
+
+This data may be used by Google to serve personalized or non-personalized advertisements depending on your device consent settings.
+
+**Google Play Billing (In-App Purchases)**
+
+The Game offers in-app purchases (such as removing ads) through Google Play Billing. Google processes all purchase transactions. Google may collect:
+
+- Purchase and transaction history related to the Game
+- Google account information necessary to process transactions
+
+We do not have access to your payment details (credit card numbers, billing addresses, etc.). All payment processing is handled entirely by Google Play.
+
+## How We Use Information
+
+We do not collect or use your personal information. Third-party services integrated into the Game use information as follows:
+
+- **AdMob**: To serve, personalize, and measure the effectiveness of advertisements.
+- **Google Play Billing**: To process in-app purchase transactions.
+
+## Third-Party Services
+
+The Game integrates the following third-party services, each governed by its own privacy policy:
+
+- **Google AdMob**: [Google Privacy Policy](https://policies.google.com/privacy)
+- **Google Play Billing**: [Google Play Terms of Service](https://play.google.com/intl/en_us/about/play-terms/)
+
+We encourage you to review these policies to understand how your data is handled by these services.
+
+## Data Retention
+
+Since we do not collect personal data, we do not retain any user data on our servers. Local game save data remains on your device until you uninstall the Game or manually clear the app data. Data collected by third-party services is retained according to their respective policies.
 
 ## Children's Privacy
 
-The app does not collect any data from anyone, including children. It is suitable for all ages.
+The Game is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided personal information through a third-party service within the Game, please contact us so we can take appropriate action.
 
 ## Changes to This Policy
 
-If this privacy policy is updated, the changes will be posted here with an updated date.
+We may update this privacy policy from time to time. Any changes will be reflected by updating the effective date at the top of this document. We encourage you to review this policy periodically.
 
 ## Contact
 
-If you have questions about this privacy policy, please contact:
+If you have questions or concerns about this privacy policy, please contact us at:
 
-- GitHub: [github.com/vStokke/stellar-vanguard](https://github.com/vStokke/stellar-vanguard)
-- Email: stellarvanguard@vstokke.com
+**stellarvanguardsupport@vstokke.com**
