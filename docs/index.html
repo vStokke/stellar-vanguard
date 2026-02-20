@@ -3,29 +3,1416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stellar Vanguard</title>
+    <title>Stellar Vanguard - Space Roguelike Shooter</title>
+    <meta name="description" content="A bullet-hell roguelike shooter with weapon evolution. Fuse weapons into evolved forms, battle 10 epic bosses, and command 10 unique ships.">
+    <meta property="og:title" content="Stellar Vanguard - Space Roguelike Shooter">
+    <meta property="og:description" content="The frontier is burning. Command sent one ship. Yours.">
+    <meta property="og:image" content="assets/promopic2.png">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/png" href="assets/icon_512.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Exo+2:wght@300;400;500;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
+        /* ═══════════════════════════════════════════
+           CSS VARIABLES
+           ═══════════════════════════════════════════ */
+        :root {
+            --neon-green: #39ff14;
+            --neon-green-dim: #39ff1466;
+            --neon-green-glow: #39ff1433;
+            --cyan: #00e5ff;
+            --cyan-dim: #00e5ff55;
+            --red-hot: #ff3d3d;
+            --red-dim: #ff3d3d44;
+            --amber: #ffab00;
+            --deep-space: #030810;
+            --panel-bg: #0a1220;
+            --panel-border: #1a2a3a;
+            --text-primary: #e8ecf1;
+            --text-secondary: #8899aa;
+            --text-dim: #556677;
+            --font-display: 'Exo 2', sans-serif;
+            --font-ui: 'Chakra Petch', sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
+        }
+
+        /* ═══════════════════════════════════════════
+           RESET & BASE
+           ═══════════════════════════════════════════ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: var(--font-ui);
+            background: var(--deep-space);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ═══════════════════════════════════════════
+           STARFIELD BACKGROUND
+           ═══════════════════════════════════════════ */
+        #starfield {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ═══════════════════════════════════════════
+           SCANLINE OVERLAY
+           ═══════════════════════════════════════════ */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 9999;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.03) 2px,
+                rgba(0, 0, 0, 0.03) 4px
+            );
+        }
+
+        /* ═══════════════════════════════════════════
+           MAIN CONTENT
+           ═══════════════════════════════════════════ */
+        main {
+            position: relative;
+            z-index: 1;
+        }
+
+        section {
+            padding: 5rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* ═══════════════════════════════════════════
+           NAV BAR
+           ═══════════════════════════════════════════ */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 0.75rem 1.5rem;
+            background: rgba(3, 8, 16, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+        }
+
+        .nav-brand img {
+            width: 32px;
+            height: 32px;
+            image-rendering: pixelated;
+            border-radius: 4px;
+        }
+
+        .nav-brand span {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            letter-spacing: 0.05em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--neon-green);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--neon-green);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* ═══════════════════════════════════════════
+           HERO SECTION
+           ═══════════════════════════════════════════ */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding-top: 4rem;
+        }
+
+        .hero-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .hero-text {
+            animation: fadeSlideUp 1s ease-out;
+        }
+
+        .hero-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--neon-green);
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-label::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 1px;
+            background: var(--neon-green);
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+        }
+
+        .hero-title .accent {
+            display: block;
+            background: linear-gradient(135deg, var(--neon-green), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-tagline {
+            font-family: var(--font-ui);
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 480px;
+            line-height: 1.7;
+        }
+
+        .hero-tagline strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-visual {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            animation: fadeSlideUp 1s ease-out 0.3s both;
+        }
+
+        .hero-image-frame {
+            position: relative;
+            width: 280px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--panel-border);
+            box-shadow:
+                0 0 40px rgba(57, 255, 20, 0.08),
+                0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-image-frame img {
+            width: 100%;
+            display: block;
+        }
+
+        .hero-image-frame::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            border: 1px solid var(--neon-green-dim);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--neon-green-glow) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        /* ═══════════════════════════════════════════
+           BUTTONS
+           ═══════════════════════════════════════════ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.85rem 1.8rem;
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            letter-spacing: 0.04em;
+        }
+
+        .btn-primary {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-green-dim);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px var(--neon-green-dim), 0 0 60px var(--neon-green-glow);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary svg { fill: #000; }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--panel-border);
+        }
+
+        .btn-ghost:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        /* ═══════════════════════════════════════════
+           LORE BANNER
+           ═══════════════════════════════════════════ */
+        .lore-banner {
+            position: relative;
+            padding: 4rem 1.5rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .lore-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--panel-border), transparent);
+        }
+
+        .lore-banner::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--panel-border), transparent);
+        }
+
+        .lore-text {
+            font-family: var(--font-display);
+            font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+            font-weight: 300;
+            font-style: italic;
+            color: var(--text-secondary);
             max-width: 700px;
             margin: 0 auto;
-            padding: 2rem 1rem;
-            color: #e0e0e0;
-            background-color: #0d1117;
+            line-height: 1.8;
+        }
+
+        .lore-text strong {
+            color: var(--neon-green);
+            font-weight: 600;
+            font-style: normal;
+        }
+
+        /* ═══════════════════════════════════════════
+           SECTION HEADERS
+           ═══════════════════════════════════════════ */
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .section-label::before {
+            content: '//';
+            color: var(--text-dim);
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            margin-bottom: 1rem;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            max-width: 550px;
+            font-weight: 300;
+            margin-bottom: 3rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           FEATURE CARDS
+           ═══════════════════════════════════════════ */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--neon-green-dim);
+            transform: translateY(-3px);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--neon-green);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.03em;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 300;
             line-height: 1.6;
         }
-        h1 { color: #f0f0f0; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem; }
-        a { color: #58a6ff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        ul { padding-left: 1.5rem; }
-        li { margin-bottom: 0.3rem; }
+
+        /* ═══════════════════════════════════════════
+           EVOLUTION SECTION
+           ═══════════════════════════════════════════ */
+        .evolution-showcase {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            margin-top: 2rem;
+        }
+
+        .evo-formula {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .evo-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .evo-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            position: relative;
+        }
+
+        .evo-icon.weapon {
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid var(--neon-green-dim);
+        }
+
+        .evo-icon.passive {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid var(--cyan-dim);
+        }
+
+        .evo-icon.evolved {
+            background: rgba(255, 171, 0, 0.1);
+            border: 1px solid rgba(255, 171, 0, 0.4);
+            box-shadow: 0 0 20px rgba(255, 171, 0, 0.15);
+        }
+
+        .evo-name {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .evo-operator {
+            font-family: var(--font-mono);
+            font-size: 1.4rem;
+            color: var(--text-dim);
+            margin-top: -1.2rem;
+        }
+
+        .evo-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .evo-example {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .evo-example-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .evo-example-dot.green { background: var(--neon-green); box-shadow: 0 0 6px var(--neon-green-dim); }
+        .evo-example-dot.cyan { background: var(--cyan); box-shadow: 0 0 6px var(--cyan-dim); }
+        .evo-example-dot.amber { background: var(--amber); box-shadow: 0 0 6px rgba(255, 171, 0, 0.4); }
+
+        .evo-example span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .evo-example strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* ═══════════════════════════════════════════
+           STATS BAR
+           ═══════════════════════════════════════════ */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--panel-border);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 4rem 0;
+        }
+
+        .stat {
+            background: var(--panel-bg);
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--neon-green), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        /* ═══════════════════════════════════════════
+           SHIPS SECTION
+           ═══════════════════════════════════════════ */
+        .ships-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .ship-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .ship-card:hover {
+            border-color: var(--cyan-dim);
+            transform: translateY(-2px);
+        }
+
+        .ship-name {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+        }
+
+        .ship-role {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.75rem;
+        }
+
+        .ship-stats {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .ship-stat-pip {
+            width: 4px;
+            height: 16px;
+            border-radius: 2px;
+            background: var(--panel-border);
+        }
+
+        .ship-stat-pip.filled {
+            background: var(--neon-green);
+            box-shadow: 0 0 4px var(--neon-green-dim);
+        }
+
+        .ship-stat-pip.filled-cyan {
+            background: var(--cyan);
+            box-shadow: 0 0 4px var(--cyan-dim);
+        }
+
+        .ship-stat-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .ship-stat-group .pips {
+            display: flex;
+            gap: 2px;
+        }
+
+        .ship-stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* ═══════════════════════════════════════════
+           CTA SECTION
+           ═══════════════════════════════════════════ */
+        .cta-section {
+            text-align: center;
+            padding: 6rem 1.5rem;
+            position: relative;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, var(--neon-green-glow) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.5rem, 3vw, 2.2rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .cta-sub {
+            color: var(--text-secondary);
+            font-weight: 300;
+            margin-bottom: 2rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           FOOTER
+           ═══════════════════════════════════════════ */
+        footer {
+            border-top: 1px solid var(--panel-border);
+            padding: 2rem 1.5rem;
+        }
+
+        .footer-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-left {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--neon-green);
+        }
+
+        /* ═══════════════════════════════════════════
+           ANIMATIONS
+           ═══════════════════════════════════════════ */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Fade-in on scroll */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .hero-inner {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 3rem;
+            }
+
+            .hero-text { order: 2; }
+            .hero-visual { order: 1; }
+
+            .hero-label { justify-content: center; }
+            .hero-tagline { margin-left: auto; margin-right: auto; }
+            .hero-cta-group { justify-content: center; }
+
+            .hero-image-frame { width: 220px; }
+
+            .nav-links { display: none; }
+
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+
+            .ships-grid { grid-template-columns: repeat(2, 1fr); }
+
+            section { padding: 3.5rem 1.25rem; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-bar { grid-template-columns: 1fr 1fr; }
+            .ships-grid { grid-template-columns: 1fr 1fr; }
+            .features-grid { grid-template-columns: 1fr; }
+            .hero-image-frame { width: 200px; }
+        }
+
+        /* ═══════════════════════════════════════════
+           GOOGLE PLAY BADGE
+           ═══════════════════════════════════════════ */
+        .play-badge {
+            height: 48px;
+            transition: transform 0.3s;
+        }
+
+        .play-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* ═══════════════════════════════════════════
+           WEAPON TICKER
+           ═══════════════════════════════════════════ */
+        .weapon-ticker-wrap {
+            overflow: hidden;
+            border-top: 1px solid var(--panel-border);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 1rem 0;
+            position: relative;
+        }
+
+        .weapon-ticker-wrap::before,
+        .weapon-ticker-wrap::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 80px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .weapon-ticker-wrap::before {
+            left: 0;
+            background: linear-gradient(90deg, var(--deep-space), transparent);
+        }
+
+        .weapon-ticker-wrap::after {
+            right: 0;
+            background: linear-gradient(270deg, var(--deep-space), transparent);
+        }
+
+        .weapon-ticker {
+            display: flex;
+            gap: 3rem;
+            animation: ticker 30s linear infinite;
+            width: max-content;
+        }
+
+        .weapon-ticker-item {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .weapon-ticker-item .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--neon-green);
+            opacity: 0.5;
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
     </style>
 </head>
 <body>
-    <h1>Stellar Vanguard</h1>
-    <p>A top-down bullet-hell shooter with roguelike upgrades.</p>
-    <ul>
-        <li><a href="privacy-policy.html">Privacy Policy</a></li>
+
+<canvas id="starfield"></canvas>
+<div class="scanlines"></div>
+
+<!-- ═══════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════ -->
+<nav>
+    <a href="#" class="nav-brand">
+        <img src="assets/icon_512.png" alt="Stellar Vanguard icon">
+        <span>Stellar Vanguard</span>
+    </a>
+    <ul class="nav-links">
+        <li><a href="#features">Systems</a></li>
+        <li><a href="#evolution">Evolution</a></li>
+        <li><a href="#ships">Fleet</a></li>
+        <li><a href="privacy-policy.html">Privacy</a></li>
     </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════ -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-text">
+            <div class="hero-label">Roguelike Bullet Hell</div>
+            <h1 class="hero-title">
+                Stellar
+                <span class="accent">Vanguard</span>
+            </h1>
+            <p class="hero-tagline">
+                Fuse weapons into <strong>evolved forms</strong>. Battle through endless waves. Face 10 brutal bosses. Command sent one ship &mdash; <strong>yours</strong>.
+            </p>
+            <div class="hero-cta-group">
+                <a href="https://play.google.com/store/apps/details?id=com.vstokke.stellarvanguard" class="btn btn-primary" target="_blank" rel="noopener">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.302 2.302a1 1 0 0 1 0 1.38l-2.302 2.302L15.395 12l2.303-2.492zM5.864 2.658L16.8 9.49l-2.302 2.302-8.635-8.635z"/></svg>
+                    Google Play
+                </a>
+                <a href="#features" class="btn btn-ghost">Learn More</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-glow"></div>
+            <div class="hero-image-frame" style="animation: float 6s ease-in-out infinite;">
+                <img src="assets/promopic.png" alt="Stellar Vanguard gameplay - bullet hell combat with weapon evolution" width="280" height="608">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     LORE BANNER
+     ═══════════════════════════════════════════ -->
+<div class="lore-banner reveal">
+    <p class="lore-text">
+        From the <strong>Crimson Nebula</strong> to the <strong>Obsidian Reach</strong>, hostile forces are tearing through colonial space. Command sent one ship. <strong>Yours.</strong>
+    </p>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     WEAPON TICKER
+     ═══════════════════════════════════════════ -->
+<div class="weapon-ticker-wrap">
+    <div class="weapon-ticker">
+        <span class="weapon-ticker-item"><span class="dot"></span>Gatling Cannon</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Plasma Cutter</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Homing Cluster Missile</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Fortress Field</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Inferno Grenades</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Resonance Cascade</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Parasitic Swarm</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Storm Rifle</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Boomerang Rockets</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Shrapnel Storm</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Capacitor Beam</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Vampire Missiles</span>
+        <!-- duplicate for seamless loop -->
+        <span class="weapon-ticker-item"><span class="dot"></span>Gatling Cannon</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Plasma Cutter</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Homing Cluster Missile</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Fortress Field</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Inferno Grenades</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Resonance Cascade</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Parasitic Swarm</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Storm Rifle</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Boomerang Rockets</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Shrapnel Storm</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Capacitor Beam</span>
+        <span class="weapon-ticker-item"><span class="dot"></span>Vampire Missiles</span>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     STATS BAR
+     ═══════════════════════════════════════════ -->
+<div class="container">
+    <div class="stats-bar reveal">
+        <div class="stat">
+            <div class="stat-number">36</div>
+            <div class="stat-label">Weapons</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">22</div>
+            <div class="stat-label">Evolutions</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">10</div>
+            <div class="stat-label">Sectors</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">&infin;</div>
+            <div class="stat-label">Scaling Waves</div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FEATURES
+     ═══════════════════════════════════════════ -->
+<section id="features">
+    <div class="container">
+        <div class="reveal">
+            <div class="section-label">Core Systems</div>
+            <h2 class="section-title">Built for Chaos</h2>
+            <p class="section-desc">Every run is different. Every weapon combination unlocks new possibilities. Survive the onslaught, evolve your arsenal, and push deeper into hostile space.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <span class="feature-icon">&#x2694;</span>
+                <h3>Weapon Evolution</h3>
+                <p>Max a weapon to level 5, pair it with the right passive, and trigger an evolution. 22 unique evolved weapons with devastating power.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">&#x1f300;</span>
+                <h3>Roguelike Waves</h3>
+                <p>Endless waves with exponential difficulty scaling. 8 enemy types, specialty foes unlocking at deeper waves, and boss fights every 5 rounds.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">&#x2699;</span>
+                <h3>26 Cybernetic Implants</h3>
+                <p>Permanent upgrades across Cortex, Chassis, and Neural tiers. Manage your capacity. Every implant persists between runs.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">&#x1f6e1;</span>
+                <h3>Boss Encounters</h3>
+                <p>10 unique bosses with 4-phase combat sequences, 14 attack patterns, and adaptive behaviors. From Lieutenant Krix to Supreme Commander Aethos.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">&#x26a1;</span>
+                <h3>Hard Mode</h3>
+                <p>1.5x spawns, 1.5x enemy HP, 1.15x damage. Higher risk, 1.25x rewards. For pilots who want to earn it.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">&#x1f4f6;</span>
+                <h3>Fully Offline</h3>
+                <p>No internet required. No energy systems. No paywalls. Play anywhere, anytime. Your progress is yours.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     EVOLUTION SECTION
+     ═══════════════════════════════════════════ -->
+<section id="evolution">
+    <div class="container">
+        <div class="reveal">
+            <div class="section-label">Weapon Fusion</div>
+            <h2 class="section-title">Evolve Your Arsenal</h2>
+            <p class="section-desc">Max a weapon to level 5, combine it with a maxed passive ability, and watch it transform into something far more lethal.</p>
+        </div>
+
+        <div class="evolution-showcase reveal">
+            <div class="evo-formula">
+                <div class="evo-item">
+                    <div class="evo-icon weapon">&#x1f52b;</div>
+                    <span class="evo-name">Weapon Lv.5</span>
+                </div>
+                <span class="evo-operator">+</span>
+                <div class="evo-item">
+                    <div class="evo-icon passive">&#x1f4a0;</div>
+                    <span class="evo-name">Passive Lv.5</span>
+                </div>
+                <span class="evo-operator">=</span>
+                <div class="evo-item">
+                    <div class="evo-icon evolved">&#x2728;</div>
+                    <span class="evo-name">Evolved Weapon</span>
+                </div>
+            </div>
+
+            <div class="evo-examples">
+                <div class="evo-example">
+                    <span class="evo-example-dot green"></span>
+                    <span>Basic Gun + Proj. Accelerator = <strong>Gatling Cannon</strong></span>
+                </div>
+                <div class="evo-example">
+                    <span class="evo-example-dot green"></span>
+                    <span>Laser + Radiation Burn = <strong>Plasma Cutter</strong></span>
+                </div>
+                <div class="evo-example">
+                    <span class="evo-example-dot cyan"></span>
+                    <span>Repulsor Field + Reinforced Hull = <strong>Fortress Field</strong></span>
+                </div>
+                <div class="evo-example">
+                    <span class="evo-example-dot cyan"></span>
+                    <span>Sonic Pulse + Kinetic Reflection = <strong>Resonance Cascade</strong></span>
+                </div>
+                <div class="evo-example">
+                    <span class="evo-example-dot amber"></span>
+                    <span>Nano Swarm + Scrap Reclamation = <strong>Parasitic Swarm</strong></span>
+                </div>
+                <div class="evo-example">
+                    <span class="evo-example-dot amber"></span>
+                    <span>Homing Missiles + Flak Cannon = <strong>Homing Cluster Missile</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SHIPS SECTION
+     ═══════════════════════════════════════════ -->
+<section id="ships">
+    <div class="container">
+        <div class="reveal">
+            <div class="section-label">Fleet Roster</div>
+            <h2 class="section-title">Choose Your Ship</h2>
+            <p class="section-desc">10 ships, each with a unique starting weapon and passive loadout. Unlock them through pilot level or weapon mastery.</p>
+        </div>
+
+        <div class="ships-grid">
+            <div class="ship-card reveal">
+                <div class="ship-name">Vanguard</div>
+                <div class="ship-role">Balanced</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Spreader</div>
+                <div class="ship-role">Bullet Storm</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Lancer</div>
+                <div class="ship-role">Shield Tank</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Striker</div>
+                <div class="ship-role">Glass Cannon</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Guardian</div>
+                <div class="ship-role">Heavy Tank</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Artillery</div>
+                <div class="ship-role">Fortress</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Flanker</div>
+                <div class="ship-role">Speed Demon</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Swarmer</div>
+                <div class="ship-role">Vampiric</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Silencer</div>
+                <div class="ship-role">Mobile Shield</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ship-card reveal">
+                <div class="ship-name">Enforcer</div>
+                <div class="ship-role">Balanced Tank</div>
+                <div class="ship-stats">
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip filled"></div><div class="ship-stat-pip"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Atk</div>
+                    </div>
+                    <div class="ship-stat-group">
+                        <div class="pips"><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip filled-cyan"></div><div class="ship-stat-pip"></div></div>
+                        <div class="ship-stat-label">Def</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     CTA
+     ═══════════════════════════════════════════ -->
+<section class="cta-section">
+    <div class="container reveal">
+        <h2 class="cta-title">Your weapons evolve. Your implants stay.<br>Every run makes you deadlier.</h2>
+        <p class="cta-sub">Free to play. No energy systems. No paywalls. Fully offline.</p>
+        <a href="https://play.google.com/store/apps/details?id=com.vstokke.stellarvanguard" class="btn btn-primary" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.302 2.302a1 1 0 0 1 0 1.38l-2.302 2.302L15.395 12l2.303-2.492zM5.864 2.658L16.8 9.49l-2.302 2.302-8.635-8.635z"/></svg>
+            Get on Google Play
+        </a>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════ -->
+<footer>
+    <div class="footer-inner">
+        <div class="footer-left">&copy; 2026 vStokke</div>
+        <ul class="footer-links">
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="mailto:stellarvanguard@vstokke.com">Contact</a></li>
+        </ul>
+    </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════════ -->
+<script>
+// Starfield
+(function() {
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    const STAR_COUNT = 180;
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    function init() {
+        resize();
+        stars = [];
+        for (let i = 0; i < STAR_COUNT; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 1.5 + 0.3,
+                speed: Math.random() * 0.15 + 0.02,
+                opacity: Math.random() * 0.7 + 0.1,
+                twinkleSpeed: Math.random() * 0.02 + 0.005,
+                twinklePhase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const time = Date.now() * 0.001;
+        for (const star of stars) {
+            star.y += star.speed;
+            if (star.y > canvas.height) {
+                star.y = 0;
+                star.x = Math.random() * canvas.width;
+            }
+            const twinkle = Math.sin(time * star.twinkleSpeed * 10 + star.twinklePhase) * 0.3 + 0.7;
+            const alpha = star.opacity * twinkle;
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(200, 220, 255, ${alpha})`;
+            ctx.fill();
+        }
+        requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    init();
+    draw();
+})();
+
+// Scroll reveal
+(function() {
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.classList.add('visible');
+                }, i * 80);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+    reveals.forEach(el => observer.observe(el));
+})();
+</script>
+
 </body>
 </html>
